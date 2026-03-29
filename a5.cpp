@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "board.cpp"
 
 void print_screen()
 {
