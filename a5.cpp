@@ -3,7 +3,6 @@
 #include "cmpt_error.h"
 #include "piece.h"
 
-#include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -172,8 +171,8 @@ int random_legal_move(const Board& board)
 
     // Return random legal column
 
-    srand(time(0));
-    int random_idx = rand() % legal_cols.size();
+    std::srand(std::time(0));
+    int random_idx = std::rand() % legal_cols.size();
     if (random_idx > legal_cols.size())
     {
         cmpt::error("Error: Random col idx not in legal cols range");
@@ -255,6 +254,34 @@ void play_computer()
     int move;
 
     // Decide if player or computer goes first
+    std::string order;
+    std::cout << "Which order do you want to go in?" << std::endl
+              << "\tFirst"  << std::cout.width(4) << "(type \'f\')" << std::endl
+              << "\tSecond" << std::cout.width(4) << "(type \'s\')" << std::endl
+              << "\tRandom" << std::cout.width(4) << "(type \'r\')" << std::endl
+              << "--> ";
+    while (std::getline(std::cin, order))
+    {
+        if (order == "f")
+        {
+            break;
+        }
+        else if (order == "s")
+        {
+            computer_move = true;
+            break;
+        }
+        else if (order == "r")
+        {
+            std::srand(std::time(0));
+            computer_move = std::rand() % 2;
+            break;
+        }
+        else
+        {
+            std::cout << "Unrecognized choice. Try Again: ";
+        }
+    }
 
     // GAME LOOP:
     // - Clear screen, Print board, Ask for which column
