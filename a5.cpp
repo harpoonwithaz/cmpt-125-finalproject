@@ -76,6 +76,12 @@ class Board {
                         case Piece::Player2:
                             std::cout << YELLOW << CIRCLE << RESET;
                             break;
+                        case Piece::Anvil1:
+                            std::cout << RED << "A" << RESET;
+                            break;
+                        case Piece::Anvil2:
+                            std::cout << YELLOW << "A" << RESET;
+                            break;
                     }
                 }
                 std::cout << std::endl;
@@ -90,6 +96,17 @@ class Board {
                 cmpt::error("Error: Cannot add piece since it isn't a legal move");
             }
 
+            if (piece == Piece::Anvil1 || piece == Piece::Anvil2)
+            {
+                // Add anvil to the very bottom of the column
+                board_matrix[5][col] = piece;
+                for (int row = (rows - 2); row >= 0; row--) // we skip the bottom row
+                {
+                    board_matrix[row][col] = Piece::Empty;
+                }
+                return;
+            }
+
             // Add piece at first available row starting from the bottom
             for (int row = (rows - 1); row >= 0; row--)
             {
@@ -101,6 +118,13 @@ class Board {
             }
         }
 
+        // Helper function to convert anvil back to regular player piece
+        Piece get_owner(Piece p) const {
+            if (p == Piece::Anvil1) return Piece::Player1;
+            if (p == Piece::Anvil2) return Piece::Player2;
+            return p;
+        }
+
         // Returns gamestate struct containing piece that won
         bool check_win()
         {
@@ -108,33 +132,41 @@ class Board {
             {
                 for (int col = 0; col < cols; col++)
                 {
-                    Piece p = board_matrix[row][col];
+                    Piece p = get_owner(board_matrix[row][col]);
                     if (p == Piece::Empty) continue;
 
                     // Horizontal check
                     if (col + 3 < cols &&
-                    p == board_matrix[row][col+1] && p == board_matrix[row][col+2] && p == board_matrix[row][col+3])
+                        p == get_owner(board_matrix[row][col+1]) &&
+                        p == get_owner(board_matrix[row][col+2]) &&
+                        p == get_owner(board_matrix[row][col+3]))
                     {
                         return true;
                     }
 
                     // Vertical check
                     if (row - 3 >= 0 &&
-                    p == board_matrix[row-1][col] && p == board_matrix[row-2][col] && p == board_matrix[row-3][col])
+                        p == get_owner(board_matrix[row-1][col]) &&
+                        p == get_owner(board_matrix[row-2][col]) &&
+                        p == get_owner(board_matrix[row-3][col]))
                     {
                         return true;
                     }
 
                     // Diagonal up
                     if (row - 3 >= 0 && col + 3 < cols &&
-                        p == board_matrix[row-1][col+1] && p == board_matrix[row-2][col+2] && p == board_matrix[row-3][col+3])
+                        p == get_owner(board_matrix[row-1][col+1]) &&
+                        p == get_owner(board_matrix[row-2][col+2]) &&
+                        p == get_owner(board_matrix[row-3][col+3]))
                     {
                         return true;
                     }
 
                     // Diagonal down
                     if (row + 3 < rows && col + 3 < cols &&
-                        p == board_matrix[row+1][col+1] && p == board_matrix[row+2][col+2] && p == board_matrix[row+3][col+3])
+                        p == get_owner(board_matrix[row+1][col+1]) &&
+                        p == get_owner(board_matrix[row+2][col+2]) &&
+                        p == get_owner(board_matrix[row+3][col+3]))
                     {
                         return true;
                     }
@@ -204,13 +236,26 @@ void title_screen()
 //                     Game Interaction
 // ==========================================================
 //
-int get_input(const Board& board)
+int get_input(const Board& board, bool& anvil)
 {
     std::string line;
     while (std::getline(std::cin, line))
     {
         try
         {
+            // Check for anvil prefix
+            if (line[0] == 'a')
+            {
+                if (anvil)
+                {
+                    cmpt::error("anvil already used");
+                }
+
+                // Set flag and remove prefix from expr
+                anvil = true;
+                line = line.substr(1);
+            }
+
             size_t pos;
             int value = std::stoi(line, &pos);
 
@@ -251,14 +296,16 @@ void play_computer()
 {
     Board board;
     bool computer_move = false;
+    bool anvil = false;
+    bool used = false;
     int move;
 
     // Decide if player or computer goes first
     std::string order;
     std::cout << "Which order do you want to go in?" << std::endl
-              << "\tFirst"  << std::cout.width(4) << "(type \'f\')" << std::endl
-              << "\tSecond" << std::cout.width(4) << "(type \'s\')" << std::endl
-              << "\tRandom" << std::cout.width(4) << "(type \'r\')" << std::endl
+              << "\tFirst       (type \'f\')" << std::endl
+              << "\tSecond      (type \'s\')" << std::endl
+              << "\tRandom      (type \'r\')" << std::endl
               << "--> ";
     while (std::getline(std::cin, order))
     {
@@ -283,10 +330,7 @@ void play_computer()
         }
     }
 
-    // GAME LOOP:
-    // - Clear screen, Print board, Ask for which column
-    // - Check legal col, if not loop back to 1
-    // - Place piece
+    // GAME LOOP
     while (true)
     {
         if (computer_move)
@@ -294,6 +338,13 @@ void play_computer()
             int rand_move = random_legal_move(board);
             board.place_piece(rand_move, Piece::Player2);
 
+            if (board.check_win())
+            {
+                clear_screen();
+                board.print_board();
+                std::cout << "Computer won" << std::endl;
+                return;
+            }
             computer_move = false;
         }
         else
@@ -302,8 +353,16 @@ void play_computer()
             board.print_board();
             std::cout << "Your move player 1" << std::endl;
 
-            move = get_input(board);
-            board.place_piece(move, Piece::Player1);
+            move = get_input(board, anvil);
+            if (anvil && !used)
+            {
+                board.place_piece(move, Piece::Anvil1);
+                used = true;
+            }
+            else
+            {
+                board.place_piece(move, Piece::Player1);
+            }
 
             if (board.check_win())
             {
