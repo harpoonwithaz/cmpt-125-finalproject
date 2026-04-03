@@ -2,6 +2,7 @@
 // #include "computer_strategy.cpp"
 #include "cmpt_error.h"
 #include "piece.h"
+#include "gamestate.h"
 
 #include <iostream>
 #include <string>
@@ -295,9 +296,7 @@ int get_input(const Board& board, bool& anvil)
 void play_computer()
 {
     Board board;
-    bool computer_move = false;
-    bool anvil_move = false;
-    bool anvil_used = false;
+    Gamestate gamestate;
 
     // Decide if player or computer goes first
     std::string order;
@@ -314,13 +313,13 @@ void play_computer()
         }
         else if (order == "s")
         {
-            computer_move = true;
+            gamestate.player_one_move = false;
             break;
         }
         else if (order == "r")
         {
             std::srand(std::time(0));
-            computer_move = std::rand() % 2;
+            gamestate.player_one_move = std::rand() % 2;
             break;
         }
         else
@@ -332,7 +331,35 @@ void play_computer()
     // GAME LOOP
     while (true)
     {
-        if (computer_move)
+        if (gamestate.player_one_move)
+        {
+            clear_screen();
+            board.print_board();
+            std::cout << "Your move " << gamestate.player_one_username << std::endl;
+            std::cout << "--> ";
+
+            int move = get_input(board, gamestate.anvil_move);
+            if (gamestate.anvil_move && !gamestate.anvil_used)
+            {
+                board.place_piece(move, Piece::Anvil1);
+                gamestate.anvil_used = true;
+            }
+            else
+            {
+                board.place_piece(move, Piece::Player1);
+            }
+
+            if (board.check_win())
+            {
+                clear_screen();
+                board.print_board();
+                std::cout << "WINNER: " << gamestate.player_one_username << std::endl;
+                return;
+            }
+
+            gamestate.player_one_move = false;
+        }
+        else
         {
             int rand_move = random_legal_move(board);
             board.place_piece(rand_move, Piece::Player2);
@@ -344,35 +371,7 @@ void play_computer()
                 std::cout << "WINNER: Computer" << std::endl;
                 return;
             }
-            computer_move = false;
-        }
-        else
-        {
-            clear_screen();
-            board.print_board();
-            std::cout << "Your move Player 1" << std::endl;
-            std::cout << "--> ";
-
-            int move = get_input(board, anvil_move);
-            if (anvil_move && !anvil_used)
-            {
-                board.place_piece(move, Piece::Anvil1);
-                anvil_used = true;
-            }
-            else
-            {
-                board.place_piece(move, Piece::Player1);
-            }
-
-            if (board.check_win())
-            {
-                clear_screen();
-                board.print_board();
-                std::cout << "WINNER: Player 1" << std::endl;
-                return;
-            }
-
-            computer_move = true;
+            gamestate.player_one_move = true;
         }
     }
 
@@ -382,43 +381,52 @@ void play_computer()
 void two_player()
 {
     Board board;
-    bool player_one = true;
-    bool anvil_move = false;
-    bool anvil_used = false;
+    Gamestate gamestate;
 
+    clear_screen();
+    std::cout << "Player 1 (red), enter username: ";
+    std::getline(std::cin, gamestate.player_one_username);
+    clear_screen();
+    std::cout << "Player 2 (yellow), enter username: ";
+    std::getline(std::cin, gamestate.player_two_username);
+
+    // game loop
     while (true)
     {
         clear_screen();
+        std::cout << "Red: " << gamestate.player_one_username << std::endl;
+        std::cout << "Yellow: " << gamestate.player_two_username << std::endl;
         board.print_board();
-        std::cout << "Your move Player ";
-        if (player_one) std::cout << "1";
-        else std::cout << "2";
+
+        std::cout << "Your move ";
+        if (gamestate.player_one_move) std::cout << gamestate.player_one_username;
+        else std::cout << gamestate.player_two_username;
         std::cout << std::endl;
         std::cout << "--> ";
 
-        int move = get_input(board, anvil_move);
-        if (anvil_move && !anvil_used)
+        int move = get_input(board, gamestate.anvil_move);
+        if (gamestate.anvil_move && !gamestate.anvil_used)
         {
-            board.place_piece(move, player_one ? Piece::Anvil1 : Piece::Anvil2);
-            anvil_used = true;
+            board.place_piece(move, gamestate.player_one_move ? Piece::Anvil1 : Piece::Anvil2);
+            gamestate.anvil_used = true;
         }
         else
         {
-            board.place_piece(move, player_one ? Piece::Player1 : Piece::Player2);
+            board.place_piece(move, gamestate.player_one_move ? Piece::Player1 : Piece::Player2);
         }
 
         if (board.check_win())
         {
             clear_screen();
             board.print_board();
-            std::cout << "WINNER: Player ";
-            if (player_one) std::cout << "1";
-            else std::cout << "2";
+            std::cout << "WINNER: ";
+            if (gamestate.player_one_move) std::cout << gamestate.player_one_username;
+            else std::cout << gamestate.player_two_username;
             std::cout << std::endl;
             return;
         }
 
-        player_one = !player_one;
+        gamestate.player_one_move = !gamestate.player_one_move;
     }
 }
 
