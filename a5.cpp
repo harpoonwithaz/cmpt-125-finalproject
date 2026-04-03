@@ -66,6 +66,7 @@ class Board {
             {
                 for (int col = 0; col < cols; col++)
                 {
+                    std::cout << " ";
                     switch (board_matrix[row][col])
                     {
                         case Piece::Empty:
@@ -85,7 +86,28 @@ class Board {
                             break;
                     }
                 }
+                if (row == 1)
+                {
+                    std::cout << "     . = empty";
+                } else if (row == 2)
+                {
+                    std::cout << "     " << RED << CIRCLE << RESET << " = Player 1";
+                } else if (row == 3)
+                {
+                    std::cout << "     " << YELLOW << CIRCLE << RESET << " = Player 2";
+                } else if (row == 4)
+                {
+                    std::cout << "     " << RED << "A" << RESET << " = Player 1 Anvil";
+                } else if (row == 5)
+                {
+                    std::cout << "     " << YELLOW << "A" << RESET << " = Player 2 Anvil";
+                }
+                
                 std::cout << std::endl;
+                
+            }
+            for (int i = 0; i < 7; i++){
+                std::cout << " " << i;
             }
             std::cout << std::endl;
         }
@@ -229,7 +251,11 @@ void clear_screen()
 
 void title_screen()
 {
-
+    std::cout << "Welcome to Oliver and Jayden's connect four. " << std::endl
+    << "To win in connect four, you need to connect four of your pieces. " << std::endl
+    << "You can enter a move by inputing a column number, column numbers start at 0." << std::endl
+    << "There is a special piece called the anvil, when used it clears all pieces in the column of your choice." << std::endl
+    << "To use the anvil type a, followed by the number of the column of your choosing." << std::endl;
 }
 
 
@@ -432,7 +458,7 @@ void two_player()
 
 int main()
 {
-    std::cout << "Welcome to Connect Four" << std::endl;
+    title_screen();
     std::string menu_choice;
     while (true)
     {
