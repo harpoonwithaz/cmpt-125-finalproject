@@ -93,7 +93,7 @@ class Board {
         {
             if (!is_legal_col(col))
             {
-                cmpt::error("Error: Cannot add piece since it isn't a legal move");
+                cmpt::error("cannot add piece since it isn't a legal move");
             }
 
             if (piece == Piece::Anvil1 || piece == Piece::Anvil2)
@@ -296,9 +296,8 @@ void play_computer()
 {
     Board board;
     bool computer_move = false;
-    bool anvil = false;
-    bool used = false;
-    int move;
+    bool anvil_move = false;
+    bool anvil_used = false;
 
     // Decide if player or computer goes first
     std::string order;
@@ -342,7 +341,7 @@ void play_computer()
             {
                 clear_screen();
                 board.print_board();
-                std::cout << "Computer won" << std::endl;
+                std::cout << "WINNER: Computer" << std::endl;
                 return;
             }
             computer_move = false;
@@ -351,13 +350,14 @@ void play_computer()
         {
             clear_screen();
             board.print_board();
-            std::cout << "Your move player 1" << std::endl;
+            std::cout << "Your move Player 1" << std::endl;
+            std::cout << "--> ";
 
-            move = get_input(board, anvil);
-            if (anvil && !used)
+            int move = get_input(board, anvil_move);
+            if (anvil_move && !anvil_used)
             {
                 board.place_piece(move, Piece::Anvil1);
-                used = true;
+                anvil_used = true;
             }
             else
             {
@@ -368,7 +368,7 @@ void play_computer()
             {
                 clear_screen();
                 board.print_board();
-                std::cout << "Player 1 won" << std::endl;
+                std::cout << "WINNER: Player 1" << std::endl;
                 return;
             }
 
@@ -377,6 +377,49 @@ void play_computer()
     }
 
     return;
+}
+
+void two_player()
+{
+    Board board;
+    bool player_one = true;
+    bool anvil_move = false;
+    bool anvil_used = false;
+
+    while (true)
+    {
+        clear_screen();
+        board.print_board();
+        std::cout << "Your move Player ";
+        if (player_one) std::cout << "1";
+        else std::cout << "2";
+        std::cout << std::endl;
+        std::cout << "--> ";
+
+        int move = get_input(board, anvil_move);
+        if (anvil_move && !anvil_used)
+        {
+            board.place_piece(move, player_one ? Piece::Anvil1 : Piece::Anvil2);
+            anvil_used = true;
+        }
+        else
+        {
+            board.place_piece(move, player_one ? Piece::Player1 : Piece::Player2);
+        }
+
+        if (board.check_win())
+        {
+            clear_screen();
+            board.print_board();
+            std::cout << "WINNER: Player ";
+            if (player_one) std::cout << "1";
+            else std::cout << "2";
+            std::cout << std::endl;
+            return;
+        }
+
+        player_one = !player_one;
+    }
 }
 
 int main()
@@ -390,12 +433,12 @@ int main()
         std::cout << "  0. Exit" << std::endl;
         std::cout << "  1. Play against computer" << std::endl;
         std::cout << "  2. Play against another person" << std::endl;
-        std::cout << ">> ";
+        std::cout << "--> ";
         std::getline(std::cin, menu_choice);
 
         if (menu_choice == "0") return 0;
         else if (menu_choice == "1") play_computer();
-        else if (menu_choice == "2") return 0;
+        else if (menu_choice == "2") two_player();
         else
         {
             std::cout << "Could not recognize choice, try again." << std::endl;
